@@ -1255,8 +1255,9 @@ typedef struct {
 } cam_faces_data_t;
 
 #define CAM_HISTOGRAM_STATS_SIZE 256
+#define MIN_CAM_HISTOGRAM_STATS_SIZE 16
+
 typedef struct {
-    uint32_t max_hist_value;
     uint32_t hist_buf[CAM_HISTOGRAM_STATS_SIZE]; /* buf holding histogram stats data */
 } cam_histogram_data_t;
 
@@ -2193,6 +2194,9 @@ typedef enum {
     /* Hack 3 to make proper enum */
     XIAOMI_DUMMY3,
     CAM_INTF_PARM_MAX
+    /* Number of histogram bins */
+    CAM_INTF_META_STATS_HISTOGRAM_BINS,
+
 } cam_intf_parm_type_t;
 
 typedef struct {

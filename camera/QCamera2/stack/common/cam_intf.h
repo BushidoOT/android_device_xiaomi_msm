@@ -992,6 +992,7 @@ typedef struct {
     INCLUDE(CAM_INTF_PARM_JPEG_SCALE_DIMENSION,         cam_dimension_t,             1); //BAD stock +44
     volatile char         xiaomi_reserved4[4];
     INCLUDE(XIAOMI_DUMMY3,                              uint8_t,                     12);
+    INCLUDE(CAM_INTF_META_STATS_HISTOGRAM_BINS,         int32_t,                     1);
 } metadata_data_t;
 
 /* Update clear_metadata_buffer() function when a new is_xxx_valid is added to

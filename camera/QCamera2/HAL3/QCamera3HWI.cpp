@@ -5227,7 +5227,48 @@ QCamera3HardwareInterface::translateFromHalMetadata(
 
     IF_META_AVAILABLE(uint32_t, histogramMode, CAM_INTF_META_STATS_HISTOGRAM_MODE, metadata) {
         uint8_t fwk_histogramMode = (uint8_t) *histogramMode;
+        int32_t histogramBins = 0;
         camMetadata.update(ANDROID_STATISTICS_HISTOGRAM_MODE, &fwk_histogramMode, 1);
+        camMetadata.update(NEXUS_EXPERIMENTAL_2017_HISTOGRAM_ENABLE, &fwk_histogramMode, 1);
+
+        IF_META_AVAILABLE(int32_t, histBins, CAM_INTF_META_STATS_HISTOGRAM_BINS, metadata) {
+            histogramBins = *histBins;
+            camMetadata.update(NEXUS_EXPERIMENTAL_2017_HISTOGRAM_BINS, &histogramBins, 1);
+        }
+
+        if (fwk_histogramMode == ANDROID_STATISTICS_HISTOGRAM_MODE_ON && histogramBins > 0) {
+            IF_META_AVAILABLE(cam_hist_stats_t, stats_data, CAM_INTF_META_HISTOGRAM, metadata) {
+                // process histogram statistics info
+                int32_t* histogramData = NULL;
+
+                switch (stats_data->type) {
+                case CAM_HISTOGRAM_TYPE_BAYER:
+                    switch (stats_data->bayer_stats.data_type) {
+                        case CAM_STATS_CHANNEL_GR:
+			  histogramData = (int32_t *)stats_data->bayer_stats.gr_stats.hist_buf;
+                            break;
+                        case CAM_STATS_CHANNEL_GB:
+                          histogramData = (int32_t *)stats_data->bayer_stats.gb_stats.hist_buf;
+                            break;
+                        case CAM_STATS_CHANNEL_B:
+                          histogramData = (int32_t *)stats_data->bayer_stats.b_stats.hist_buf;
+                            break;
+                        case CAM_STATS_CHANNEL_Y:
+                        case CAM_STATS_CHANNEL_ALL:
+                        case CAM_STATS_CHANNEL_R:
+                        default:
+                          histogramData = (int32_t *)stats_data->bayer_stats.r_stats.hist_buf;
+                            break;
+                    }
+                    break;
+                case CAM_HISTOGRAM_TYPE_YUV:
+                    histogramData = (int32_t *)stats_data->yuv_stats.hist_buf;
+                    break;
+                }
+
+                camMetadata.update(NEXUS_EXPERIMENTAL_2017_HISTOGRAM, histogramData, histogramBins);
+            }
+        }
     }
 
     IF_META_AVAILABLE(uint32_t, sharpnessMapMode,
@@ -6819,6 +6860,19 @@ int QCamera3HardwareInterface::initStaticMetadata(uint32_t cameraId)
     staticInfo.update(ANDROID_STATISTICS_INFO_MAX_HISTOGRAM_COUNT,
             &gCamCapability[cameraId]->max_histogram_count, 1);
 
+    //Set supported bins to be {max_bins, max_bins/2, max_bins/4, ...}
+    //so that app can request fewer number of bins than the maximum supported.
+    std::vector<int32_t> histBins;
+    int32_t maxHistBins = gCamCapability[cameraId]->max_histogram_count;
+    histBins.push_back(maxHistBins);
+    while ((maxHistBins >> 1) >= MIN_CAM_HISTOGRAM_STATS_SIZE &&
+           (maxHistBins & 0x1) == 0) {
+        histBins.push_back(maxHistBins >> 1);
+        maxHistBins >>= 1;
+    }
+    staticInfo.update(NEXUS_EXPERIMENTAL_2017_HISTOGRAM_SUPPORTED_BINS,
+            histBins.data(), histBins.size());
+
     int32_t sharpness_map_size[] = {
             gCamCapability[cameraId]->sharpness_map_size.width,
             gCamCapability[cameraId]->sharpness_map_size.height};
@@ -7529,7 +7583,11 @@ int QCamera3HardwareInterface::initStaticMetadata(uint32_t cameraId)
        ANDROID_STATISTICS_HISTOGRAM_MODE, ANDROID_STATISTICS_SHARPNESS_MAP_MODE,
        ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, ANDROID_TONEMAP_CURVE_BLUE,
        ANDROID_TONEMAP_CURVE_GREEN, ANDROID_TONEMAP_CURVE_RED, ANDROID_TONEMAP_MODE,
-       ANDROID_BLACK_LEVEL_LOCK };
+       ANDROID_BLACK_LEVEL_LOCK
+       NEXUS_EXPERIMENTAL_2017_HISTOGRAM_ENABLE,
+       NEXUS_EXPERIMENTAL_2017_HISTOGRAM_BINS
+        };
+
 
     size_t request_keys_cnt =
             sizeof(request_keys_basic)/sizeof(request_keys_basic[0]);
@@ -7567,6 +7625,9 @@ int QCamera3HardwareInterface::initStaticMetadata(uint32_t cameraId)
 #ifndef USE_HAL_3_3
        ANDROID_CONTROL_POST_RAW_SENSITIVITY_BOOST,
 #endif
+       NEXUS_EXPERIMENTAL_2017_HISTOGRAM_ENABLE,
+       NEXUS_EXPERIMENTAL_2017_HISTOGRAM_BINS,
+       NEXUS_EXPERIMENTAL_2017_HISTOGRAM,
        };
 
     size_t result_keys_cnt =
@@ -8149,6 +8210,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     uint8_t tonemap_mode;
     bool highQualityModeEntryAvailable = FALSE;
     bool fastModeEntryAvailable = FALSE;
+    uint8_t histogramEnable = false;
     vsMode = ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF;
     optStabMode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
     switch (type) {
@@ -8252,6 +8314,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
         focusMode = ANDROID_CONTROL_AF_MODE_OFF;
     }
     settings.update(ANDROID_CONTROL_AF_MODE, &focusMode, 1);
+    settings.update(NEXUS_EXPERIMENTAL_2017_HISTOGRAM_ENABLE, &histogramEnable, 1);
 
     if (gCamCapability[mCameraId]->optical_stab_modes_count == 1 &&
             gCamCapability[mCameraId]->optical_stab_modes[0] == CAM_OPT_STAB_ON)
@@ -8527,6 +8590,25 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
 
     return mDefaultMetadata[type];
 }
+
+    // Histogram
+    if (frame_settings.exists(NEXUS_EXPERIMENTAL_2017_HISTOGRAM_ENABLE)) {
+        uint8_t histogramMode =
+                frame_settings.find(NEXUS_EXPERIMENTAL_2017_HISTOGRAM_ENABLE).data.u8[0];
+        if (ADD_SET_PARAM_ENTRY_TO_BATCH(hal_metadata, CAM_INTF_META_STATS_HISTOGRAM_MODE,
+                histogramMode)) {
+            rc = BAD_VALUE;
+        }
+    }
+
+    if (frame_settings.exists(NEXUS_EXPERIMENTAL_2017_HISTOGRAM_BINS)) {
+        int32_t histogramBins =
+                 frame_settings.find(NEXUS_EXPERIMENTAL_2017_HISTOGRAM_BINS).data.i32[0];
+        if (ADD_SET_PARAM_ENTRY_TO_BATCH(hal_metadata, CAM_INTF_META_STATS_HISTOGRAM_BINS,
+                histogramBins)) {
+            rc = BAD_VALUE;
+        }
+    }
 
 /*===========================================================================
  * FUNCTION   : setFrameParameters
