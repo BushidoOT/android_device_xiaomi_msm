@@ -9,4 +9,9 @@ type sysfs_fpc_keyevents, sysfs_type, fs_type;
 type sysfs_fpc_wakeup, sysfs_type, fs_type;
 type sysfs_fpc_proximity, sysfs_type, fs_type;
 type sysfs_panel, sysfs_type, fs_type;
+<<<<<<< HEAD
 type thermal_data_file, file_type, data_file_type;
+=======
+type thermal_data_file, file_type;
+type kcal_dev, sysfs_type, file_type;
+>>>>>>> f4d3dcd... msm8996-common: Add KCal support
