@@ -8155,7 +8155,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
         optStabMode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON;
         cacMode = ANDROID_COLOR_CORRECTION_ABERRATION_MODE_FAST;
-        edge_mode = ANDROID_EDGE_MODE_FAST;
+        edge_mode = ANDROID_EDGE_MODE_OFF;
         noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_FAST;
         tonemap_mode = ANDROID_TONEMAP_MODE_FAST;
         break;
@@ -8163,7 +8163,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
         optStabMode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON;
-        edge_mode = ANDROID_EDGE_MODE_HIGH_QUALITY;
+        edge_mode = ANDROID_EDGE_MODE_OFF;
         noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_HIGH_QUALITY;
         tonemap_mode = ANDROID_TONEMAP_MODE_HIGH_QUALITY;
         cacMode = ANDROID_COLOR_CORRECTION_ABERRATION_MODE_OFF;
@@ -8191,7 +8191,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
             vsMode = ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_ON;
         }
         cacMode = ANDROID_COLOR_CORRECTION_ABERRATION_MODE_FAST;
-        edge_mode = ANDROID_EDGE_MODE_FAST;
+        edge_mode = ANDROID_EDGE_MODE_OFF;
         noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_FAST;
         tonemap_mode = ANDROID_TONEMAP_MODE_FAST;
         if (forceVideoOis)
@@ -8205,7 +8205,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
             vsMode = ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_ON;
         }
         cacMode = ANDROID_COLOR_CORRECTION_ABERRATION_MODE_FAST;
-        edge_mode = ANDROID_EDGE_MODE_FAST;
+        edge_mode = ANDROID_EDGE_MODE_OFF;
         noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_FAST;
         tonemap_mode = ANDROID_TONEMAP_MODE_FAST;
         if (forceVideoOis)
@@ -8216,12 +8216,12 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
         optStabMode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON;
         cacMode = ANDROID_COLOR_CORRECTION_ABERRATION_MODE_FAST;
-        edge_mode = ANDROID_EDGE_MODE_ZERO_SHUTTER_LAG;
+        edge_mode = ANDROID_EDGE_MODE_OFF;
         noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_ZERO_SHUTTER_LAG;
         tonemap_mode = ANDROID_TONEMAP_MODE_FAST;
         break;
       case CAMERA3_TEMPLATE_MANUAL:
-        edge_mode = ANDROID_EDGE_MODE_FAST;
+        edge_mode = ANDROID_EDGE_MODE_OFF;
         noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_FAST;
         tonemap_mode = ANDROID_TONEMAP_MODE_FAST;
         cacMode = ANDROID_COLOR_CORRECTION_ABERRATION_MODE_FAST;
@@ -8230,7 +8230,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
         optStabMode = ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
         break;
       default:
-        edge_mode = ANDROID_EDGE_MODE_FAST;
+        edge_mode = ANDROID_EDGE_MODE_OFF;
         noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_FAST;
         tonemap_mode = ANDROID_TONEMAP_MODE_FAST;
         cacMode = ANDROID_COLOR_CORRECTION_ABERRATION_MODE_FAST;
