@@ -206,6 +206,9 @@ include device/qcom/sepolicy/sepolicy.mk
 
 BOARD_SEPOLICY_DIRS += $(VENDOR_PATH)/sepolicy
 
+# Treble
+PRODUCT_FULL_TREBLE_OVERRIDE := true
+
 # Vendor init
 TARGET_INIT_VENDOR_LIB := libinit_msm8996
 TARGET_RECOVERY_DEVICE_MODULES := libinit_msm8996
