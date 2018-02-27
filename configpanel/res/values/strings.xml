@@ -55,4 +55,8 @@
     <string name="kcal_saturation">Saturation</string>
     <string name="kcal_contrast">Constrast</string>
 
+    <!-- Home Wake -->
+    <string name="button_home_wake_title">Home button wake</string>
+    <string name="button_home_wake_summary">Pressing the home button will wake the device</string>
+
 </resources>
