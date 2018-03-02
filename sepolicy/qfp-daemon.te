@@ -13,3 +13,10 @@ r_dir_file(qfp-daemon, sensors_persist_file)
 
 # Ignore all logging requests
 dontaudit qfp-daemon storage_file:dir search;
+
+allow qfp-daemon media_rw_data_file:dir { open read search };
+allow qfp-daemon mnt_user_file:dir search;
+allow qfp-daemon mnt_user_file:lnk_file read;
+allow qfp-daemon sdcardfs:dir search;
+allow qfp-daemon storage_file:lnk_file read;
+

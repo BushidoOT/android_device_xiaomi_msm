@@ -1,2 +1,5 @@
 # For the camera app
 get_prop(appdomain, camera_prop)
+
+allow platform_app qemu_hw_mainkeys_prop:file { getattr open read };
+

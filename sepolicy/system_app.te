@@ -8,3 +8,8 @@ allow system_app sysfs_fpc_wakeup:file rw_file_perms;
 allow system_app sysfs_fpc_proximity:file rw_file_perms;
 
 allow system_app qfp_proxy_service:service_manager add;
+
+allow priv_app adsprpcd_file:filesystem getattr;
+allow priv_app device:dir open;
+allow priv_app proc_interrupts:file open;
+allow priv_app proc_stat:file { getattr open read };
