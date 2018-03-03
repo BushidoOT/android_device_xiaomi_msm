@@ -6,6 +6,7 @@ LOCAL_CERTIFICATE := platform
 LOCAL_PRIVILEGED_MODULE := true
 LOCAL_PACKAGE_NAME := ConfigPanel
 LOCAL_REQUIRED_MODULES := XiaomiPocketMode
+LOCAL_VENDOR_MODULE := true
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-v4 \
