@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.android.settings.device;
+package com.cyanogenmod.settings.device;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +37,7 @@ public class Constants {
     public static final String DT2W_NODE = "/proc/touchpanel/double_tap_enable";
     
     // Intents
-    public static final String CUST_INTENT = "com.android.settings.device.CUST_UPDATE";
+    public static final String CUST_INTENT = "com.cyanogenmod.settings.device.CUST_UPDATE";
     public static final String CUST_INTENT_EXTRA = "pocketmode_service";
 
     // Holds <preference_key> -> <proc_node> mapping

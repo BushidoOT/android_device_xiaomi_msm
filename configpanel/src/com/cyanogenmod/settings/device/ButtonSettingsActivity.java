@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.android.settings.device;
+package com.cyanogenmod.settings.device;
 
 import android.os.Bundle;
 import android.preference.PreferenceActivity;

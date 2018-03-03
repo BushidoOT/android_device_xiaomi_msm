@@ -17,12 +17,12 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           android:sharedUserId="android.uid.system"
-          package="com.android.settings.device"
+          package="com.cyanogenmod.settings.device"
           android:versionCode="6"
           android:versionName="2.4" >
 
     <uses-permission android:name="android.permission.INJECT_EVENTS"/>
-    <protected-broadcast android:name="com.android.settings.device.CUST_UPDATE" />
+    <protected-broadcast android:name="com.cyanogenmod.settings.device.CUST_UPDATE" />
 
     <uses-sdk
         android:minSdkVersion="24" />
@@ -36,7 +36,7 @@
 
         <provider
             android:name=".ConfigPanelSearchIndexablesProvider"
-            android:authorities="com.android.settings.device"
+            android:authorities="com.cyanogenmod.settings.device"
             android:multiprocess="false"
             android:grantUriPermissions="true"
             android:permission="android.permission.READ_SEARCH_INDEXABLES"
@@ -72,7 +72,7 @@
 
         <activity android:name=".KeyHandler" />
 
-	<receiver android:name=".Startup" >
+	<receiver android:name="com.cyanogenmod.device.Startup" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.PRE_BOOT_COMPLETED" />

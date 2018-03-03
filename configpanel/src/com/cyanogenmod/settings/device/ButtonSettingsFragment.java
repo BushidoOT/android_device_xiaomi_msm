@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.android.settings.device;
+package com.cyanogenmod.settings.device;
 
 import android.content.SharedPreferences;
 import android.content.Intent;

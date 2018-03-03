@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.android.settings.device;
+package com.cyanogenmod.settings.device;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -29,6 +29,7 @@ import android.util.Log;
 import java.io.File;
 
 import com.cyanogenmod.settings.device.utils.FileUtils;
+import com.cyanogenmod.device.KeyHandler;
 
 public class Startup extends BroadcastReceiver {
 

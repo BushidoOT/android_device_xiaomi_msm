@@ -15,7 +15,7 @@
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
 *
 */
-package com.android.device;
+package com.cyanogenmod.device;
 
 import android.content.Context;
 import android.content.Intent;
@@ -80,13 +80,11 @@ public class KeyHandler implements DeviceKeyHandler {
         return false;
     }
 
-    @Override
     public boolean canHandleKeyEvent(KeyEvent event) {
         Log.i(TAG, "canHandleKeyEvent called - scancode=" + event.getScanCode() + " - keyevent=" + event.getAction());
         return false;
     }
 
-    @Override
     public boolean isDisabledKeyEvent(KeyEvent event) {
         return false;
     }
@@ -98,12 +96,10 @@ public class KeyHandler implements DeviceKeyHandler {
         if (DEBUG) Log.i(TAG, "mHomeButtonWakeEnabled=" + mHomeButtonWakeEnabled);
     }
 
-    @Override
     public boolean isCameraLaunchEvent(KeyEvent event) {
         return false;
     }
 
-    @Override
     public boolean isWakeEvent(KeyEvent event){
         if (DEBUG) Log.i(TAG, "isWakeEvent called - scancode=" + event.getScanCode() + " - keyevent=" + event.getAction());
         if (event.getAction() != KeyEvent.ACTION_UP) {
@@ -122,7 +118,6 @@ public class KeyHandler implements DeviceKeyHandler {
         return false;
     }
 
-    @Override
     public Intent isActivityLaunchEvent(KeyEvent event) {
         if (event.getAction() != KeyEvent.ACTION_UP) {
             return null;
