@@ -37,7 +37,7 @@ import android.content.Context;
 import java.io.File;
 
 import com.cyanogenmod.settings.device.utils.FileUtils;
-import org.cyanogenmod.settings.device.utils.PackageManagerUtils;
+import com.cyanogenmod.settings.device.utils.PackageManagerUtils;
 
 public class ButtonSettingsFragment extends PreferenceFragment
         implements OnPreferenceChangeListener {
