@@ -18,16 +18,33 @@
 
 #include "Light.h"
 
+#include <fstream>
+
 #include <android-base/logging.h>
 
 namespace {
 using android::hardware::light::V2_0::LightState;
+
+#define BUTTON_BACKLIGHT "/sys/class/leds/button-backlight/brightness"
+#define BUTTON_BACKLIGHT1 "/sys/class/leds/button-backlight1/brightness"
 
 static constexpr int RAMP_SIZE = 8;
 static constexpr int RAMP_STEP_DURATION = 50;
 
 static constexpr int BRIGHTNESS_RAMP[RAMP_SIZE] = {0, 12, 25, 37, 50, 72, 85, 100};
 static constexpr int DEFAULT_MAX_BRIGHTNESS = 255;
+
+/*
+ * Write value to path and close file.
+ */
+static void set(std::string path, std::string value) {
+    std::ofstream file(path);
+    file << value;
+}
+
+static void set(std::string path, int value) {
+    set(path, std::to_string(value));
+}
 
 static uint32_t rgbToBrightness(const LightState& state) {
     uint32_t color = state.color & 0x00ffffff;
@@ -156,9 +173,8 @@ void Light::setButtonsBacklight(const LightState& state) {
 
     uint32_t brightness = rgbToBrightness(state);
 
-    for (auto& button : mButtonBacklight) {
-        button << brightness << std::endl;
-    }
+    set(BUTTON_BACKLIGHT, brightness);
+    set(BUTTON_BACKLIGHT1, brightness);
 }
 
 void Light::setBatteryLight(const LightState& state) {
