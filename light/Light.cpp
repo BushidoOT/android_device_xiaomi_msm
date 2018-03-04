@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The LineageOS Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,60 +14,11 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "LightService"
+#define LOG_TAG "light"
+
+#include <log/log.h>
 
 #include "Light.h"
-
-#include <fstream>
-
-#include <android-base/logging.h>
-
-namespace {
-using android::hardware::light::V2_0::LightState;
-
-#define BUTTON_BACKLIGHT "/sys/class/leds/button-backlight/brightness"
-#define BUTTON_BACKLIGHT1 "/sys/class/leds/button-backlight1/brightness"
-
-static constexpr int RAMP_SIZE = 8;
-static constexpr int RAMP_STEP_DURATION = 50;
-
-static constexpr int BRIGHTNESS_RAMP[RAMP_SIZE] = {0, 12, 25, 37, 50, 72, 85, 100};
-static constexpr int DEFAULT_MAX_BRIGHTNESS = 255;
-
-/*
- * Write value to path and close file.
- */
-static void set(std::string path, std::string value) {
-    std::ofstream file(path);
-    file << value;
-}
-
-static void set(std::string path, int value) {
-    set(path, std::to_string(value));
-}
-
-static uint32_t rgbToBrightness(const LightState& state) {
-    uint32_t color = state.color & 0x00ffffff;
-    return ((77 * ((color >> 16) & 0xff)) + (150 * ((color >> 8) & 0xff)) +
-            (29 * (color & 0xff))) >> 8;
-}
-
-static bool isLit(const LightState& state) {
-    return (state.color & 0x00ffffff);
-}
-
-static std::string getScaledDutyPcts(int brightness) {
-    std::string buf, pad;
-
-    for (auto i : BRIGHTNESS_RAMP) {
-        buf += pad;
-        buf += std::to_string(i * brightness / 255);
-        pad = ",";
-    }
-
-    return buf;
-}
-}  // anonymous namespace
 
 namespace android {
 namespace hardware {
@@ -75,236 +26,134 @@ namespace light {
 namespace V2_0 {
 namespace implementation {
 
-Light::Light(std::pair<std::ofstream, uint32_t>&& lcd_backlight,
-             std::vector<std::ofstream>&& button_backlight,
-             std::ofstream&& red_led, std::ofstream&& green_led, std::ofstream&& blue_led,
-             std::ofstream&& red_duty_pcts, std::ofstream&& green_duty_pcts, std::ofstream&& blue_duty_pcts,
-             std::ofstream&& red_start_idx, std::ofstream&& green_start_idx, std::ofstream&& blue_start_idx,
-             std::ofstream&& red_pause_lo, std::ofstream&& green_pause_lo, std::ofstream&& blue_pause_lo,
-             std::ofstream&& red_pause_hi, std::ofstream&& green_pause_hi, std::ofstream&& blue_pause_hi,
-             std::ofstream&& red_ramp_step_ms, std::ofstream&& green_ramp_step_ms, std::ofstream&& blue_ramp_step_ms,
-             std::ofstream&& red_blink, std::ofstream&& green_blink, std::ofstream&& blue_blink,
-             std::ofstream&& rgb_blink)
-    : mLcdBacklight(std::move(lcd_backlight)),
-      mButtonBacklight(std::move(button_backlight)),
-      mRedLed(std::move(red_led)),
-      mGreenLed(std::move(green_led)),
-      mBlueLed(std::move(blue_led)),
-      mRedDutyPcts(std::move(red_duty_pcts)),
-      mGreenDutyPcts(std::move(green_duty_pcts)),
-      mBlueDutyPcts(std::move(blue_duty_pcts)),
-      mRedStartIdx(std::move(red_start_idx)),
-      mGreenStartIdx(std::move(green_start_idx)),
-      mBlueStartIdx(std::move(blue_start_idx)),
-      mRedPauseLo(std::move(red_pause_lo)),
-      mGreenPauseLo(std::move(green_pause_lo)),
-      mBluePauseLo(std::move(blue_pause_lo)),
-      mRedPauseHi(std::move(red_pause_hi)),
-      mGreenPauseHi(std::move(green_pause_hi)),
-      mBluePauseHi(std::move(blue_pause_hi)),
-      mRedRampStepMs(std::move(red_ramp_step_ms)),
-      mGreenRampStepMs(std::move(green_ramp_step_ms)),
-      mBlueRampStepMs(std::move(blue_ramp_step_ms)),
-      mRedBlink(std::move(red_blink)),
-      mGreenBlink(std::move(green_blink)),
-      mBlueBlink(std::move(blue_blink)),
-      mRgbBlink(std::move(rgb_blink)) {
-    auto attnFn(std::bind(&Light::setAttentionLight, this, std::placeholders::_1));
-    auto backlightFn(std::bind(&Light::setLcdBacklight, this, std::placeholders::_1));
-    auto batteryFn(std::bind(&Light::setBatteryLight, this, std::placeholders::_1));
-    auto buttonsFn(std::bind(&Light::setButtonsBacklight, this, std::placeholders::_1));
-    auto notifFn(std::bind(&Light::setNotificationLight, this, std::placeholders::_1));
-    mLights.emplace(std::make_pair(Type::ATTENTION, attnFn));
-    mLights.emplace(std::make_pair(Type::BACKLIGHT, backlightFn));
-    mLights.emplace(std::make_pair(Type::BATTERY, batteryFn));
-    mLights.emplace(std::make_pair(Type::BUTTONS, buttonsFn));
-    mLights.emplace(std::make_pair(Type::NOTIFICATIONS, notifFn));
-}
+static_assert(LIGHT_FLASH_NONE == static_cast<int>(Flash::NONE),
+    "Flash::NONE must match legacy value.");
+static_assert(LIGHT_FLASH_TIMED == static_cast<int>(Flash::TIMED),
+    "Flash::TIMED must match legacy value.");
+static_assert(LIGHT_FLASH_HARDWARE == static_cast<int>(Flash::HARDWARE),
+    "Flash::HARDWARE must match legacy value.");
+
+static_assert(BRIGHTNESS_MODE_USER == static_cast<int>(Brightness::USER),
+    "Brightness::USER must match legacy value.");
+static_assert(BRIGHTNESS_MODE_SENSOR == static_cast<int>(Brightness::SENSOR),
+    "Brightness::SENSOR must match legacy value.");
+static_assert(BRIGHTNESS_MODE_LOW_PERSISTENCE ==
+    static_cast<int>(Brightness::LOW_PERSISTENCE),
+    "Brightness::LOW_PERSISTENCE must match legacy value.");
+
+Light::Light(std::map<Type, light_device_t*> &&lights)
+  : mLights(std::move(lights)) {}
 
 // Methods from ::android::hardware::light::V2_0::ILight follow.
-Return<Status> Light::setLight(Type type, const LightState& state) {
+Return<Status> Light::setLight(Type type, const LightState& state)  {
     auto it = mLights.find(type);
 
     if (it == mLights.end()) {
         return Status::LIGHT_NOT_SUPPORTED;
     }
 
-    it->second(state);
+    light_device_t* hwLight = it->second;
 
-    return Status::SUCCESS;
+    light_state_t legacyState {
+        .color = state.color,
+        .flashMode = static_cast<int>(state.flashMode),
+        .flashOnMS = state.flashOnMs,
+        .flashOffMS = state.flashOffMs,
+        .brightnessMode = static_cast<int>(state.brightnessMode),
+    };
+
+    int ret = hwLight->set_light(hwLight, &legacyState);
+
+    switch (ret) {
+        case -ENOSYS:
+            return Status::BRIGHTNESS_NOT_SUPPORTED;
+        case 0:
+            return Status::SUCCESS;
+        default:
+            return Status::UNKNOWN;
+    }
 }
 
-Return<void> Light::getSupportedTypes(getSupportedTypes_cb _hidl_cb) {
-    std::vector<Type> types;
+Return<void> Light::getSupportedTypes(getSupportedTypes_cb _hidl_cb)  {
+    Type *types = new Type[mLights.size()];
 
-    for (auto const& light : mLights) {
-        types.push_back(light.first);
+    int idx = 0;
+    for(auto const &pair : mLights) {
+        Type type = pair.first;
+
+        types[idx++] = type;
     }
 
-    _hidl_cb(types);
+    {
+        hidl_vec<Type> hidl_types{};
+        hidl_types.setToExternal(types, mLights.size());
+
+        _hidl_cb(hidl_types);
+    }
+
+    delete[] types;
 
     return Void();
 }
 
-void Light::setAttentionLight(const LightState& state) {
-    std::lock_guard<std::mutex> lock(mLock);
-    mAttentionState = state;
-    setSpeakerBatteryLightLocked();
-}
+const static std::map<Type, const char*> kLogicalLights = {
+    {Type::BACKLIGHT,     LIGHT_ID_BACKLIGHT},
+    {Type::KEYBOARD,      LIGHT_ID_KEYBOARD},
+    {Type::BUTTONS,       LIGHT_ID_BUTTONS},
+    {Type::BATTERY,       LIGHT_ID_BATTERY},
+    {Type::NOTIFICATIONS, LIGHT_ID_NOTIFICATIONS},
+    {Type::ATTENTION,     LIGHT_ID_ATTENTION},
+    {Type::BLUETOOTH,     LIGHT_ID_BLUETOOTH},
+    {Type::WIFI,          LIGHT_ID_WIFI}
+};
 
-void Light::setLcdBacklight(const LightState& state) {
-    std::lock_guard<std::mutex> lock(mLock);
+light_device_t* getLightDevice(const char* name) {
+    light_device_t* lightDevice;
+    const hw_module_t* hwModule = NULL;
 
-    uint32_t brightness = rgbToBrightness(state);
-
-    // If max panel brightness is not the default (255),
-    // apply linear scaling across the accepted range.
-    if (mLcdBacklight.second != DEFAULT_MAX_BRIGHTNESS) {
-        int old_brightness = brightness;
-        brightness = brightness * mLcdBacklight.second / DEFAULT_MAX_BRIGHTNESS;
-        LOG(VERBOSE) << "scaling brightness " << old_brightness << " => " << brightness;
-    }
-
-    mLcdBacklight.first << brightness << std::endl;
-}
-
-void Light::setButtonsBacklight(const LightState& state) {
-    std::lock_guard<std::mutex> lock(mLock);
-
-    uint32_t brightness = rgbToBrightness(state);
-
-    set(BUTTON_BACKLIGHT, brightness);
-    set(BUTTON_BACKLIGHT1, brightness);
-}
-
-void Light::setBatteryLight(const LightState& state) {
-    std::lock_guard<std::mutex> lock(mLock);
-    mBatteryState = state;
-    setSpeakerBatteryLightLocked();
-}
-
-void Light::setNotificationLight(const LightState& state) {
-    std::lock_guard<std::mutex> lock(mLock);
-
-    uint32_t brightness, color, rgb[3];
-    LightState localState = state;
-
-    // If a brightness has been applied by the user
-    brightness = (localState.color & 0xff000000) >> 24;
-    if (brightness > 0 && brightness < 255) {
-        // Retrieve each of the RGB colors
-        color = localState.color & 0x00ffffff;
-        rgb[0] = (color >> 16) & 0xff;
-        rgb[1] = (color >> 8) & 0xff;
-        rgb[2] = color & 0xff;
-
-        // Apply the brightness level
-        if (rgb[0] > 0) {
-            rgb[0] = (rgb[0] * brightness) / 0xff;
+    int ret = hw_get_module (LIGHTS_HARDWARE_MODULE_ID, &hwModule);
+    if (ret == 0) {
+        ret = hwModule->methods->open(hwModule, name,
+            reinterpret_cast<hw_device_t**>(&lightDevice));
+        if (ret != 0) {
+            ALOGE("light_open %s %s failed: %d", LIGHTS_HARDWARE_MODULE_ID, name, ret);
         }
-        if (rgb[1] > 0) {
-            rgb[1] = (rgb[1] * brightness) / 0xff;
-        }
-        if (rgb[2] > 0) {
-            rgb[2] = (rgb[2] * brightness) / 0xff;
-        }
-
-        // Update with the new color
-        localState.color = (rgb[0] << 16) + (rgb[1] << 8) + rgb[2];
-    }
-
-    mNotificationState = localState;
-    setSpeakerBatteryLightLocked();
-}
-
-void Light::setSpeakerBatteryLightLocked() {
-    if (isLit(mNotificationState)) {
-        setSpeakerLightLocked(mNotificationState);
-    } else if (isLit(mAttentionState)) {
-        setSpeakerLightLocked(mAttentionState);
-    } else if (isLit(mBatteryState)) {
-        setSpeakerLightLocked(mBatteryState);
     } else {
-        // Lights off
-        mRedLed << 0 << std::endl;
-        mGreenLed << 0 << std::endl;
-        mBlueLed << 0 << std::endl;
-        mRedBlink << 0 << std::endl;
-        mGreenBlink << 0 << std::endl;
-        mBlueBlink << 0 << std::endl;
-    }
-}
-
-void Light::setSpeakerLightLocked(const LightState& state) {
-    int red, green, blue, blink;
-    int onMs, offMs, stepDuration, pauseHi;
-    uint32_t colorRGB = state.color;
-
-    switch (state.flashMode) {
-        case Flash::TIMED:
-            onMs = state.flashOnMs;
-            offMs = state.flashOffMs;
-            break;
-        case Flash::NONE:
-        default:
-            onMs = 0;
-            offMs = 0;
-            break;
+        ALOGE("hw_get_module %s %s failed: %d", LIGHTS_HARDWARE_MODULE_ID, name, ret);
     }
 
-    red = (colorRGB >> 16) & 0xff;
-    green = (colorRGB >> 8) & 0xff;
-    blue = colorRGB & 0xff;
-    blink = onMs > 0 && offMs > 0;
-
-    // Disable all blinking to start
-    mRgbBlink << 0 << std::endl;
-
-    if (blink) {
-        stepDuration = RAMP_STEP_DURATION;
-        pauseHi = onMs - (stepDuration * RAMP_SIZE * 2);
-
-        if (stepDuration * RAMP_SIZE * 2 > onMs) {
-            stepDuration = onMs / (RAMP_SIZE * 2);
-            pauseHi = 0;
-        }
-
-        // Red
-        mRedStartIdx << 0 << std::endl;
-        mRedDutyPcts << getScaledDutyPcts(red) << std::endl;
-        mRedPauseLo << offMs << std::endl;
-        mRedPauseHi << pauseHi << std::endl;
-        mRedRampStepMs << stepDuration << std::endl;
-
-        // Green
-        mGreenStartIdx << RAMP_SIZE << std::endl;
-        mGreenDutyPcts << getScaledDutyPcts(green) << std::endl;
-        mGreenPauseLo << offMs << std::endl;
-        mGreenPauseHi << pauseHi << std::endl;
-        mGreenRampStepMs << stepDuration << std::endl;
-
-        // Blue
-        mBlueStartIdx << RAMP_SIZE * 2 << std::endl;
-        mBlueDutyPcts << getScaledDutyPcts(blue) << std::endl;
-        mBluePauseLo << offMs << std::endl;
-        mBluePauseHi << pauseHi << std::endl;
-        mBlueRampStepMs << stepDuration << std::endl;
-
-        // Start the party
-        mRgbBlink << 1 << std::endl;
+    if (ret == 0) {
+        return lightDevice;
     } else {
-        if (red == 0 && green == 0 && blue == 0) {
-            mRedBlink << 0 << std::endl;
-            mGreenBlink << 0 << std::endl;
-            mBlueBlink << 0 << std::endl;
-        }
-        mRedLed << red << std::endl;
-        mGreenLed << green << std::endl;
-        mBlueLed << blue << std::endl;
+        ALOGE("Light passthrough failed to load legacy HAL.");
+        return nullptr;
     }
 }
 
-}  // namespace implementation
+ILight* HIDL_FETCH_ILight(const char* /* name */) {
+    std::map<Type, light_device_t*> lights;
+
+    for(auto const &pair : kLogicalLights) {
+        Type type = pair.first;
+        const char* name = pair.second;
+
+        light_device_t* light = getLightDevice(name);
+
+        if (light != nullptr) {
+            lights[type] = light;
+        }
+    }
+
+    if (lights.size() == 0) {
+        // Log information, but still return new Light.
+        // Some devices may not have any lights.
+        ALOGI("Could not open any lights.");
+    }
+
+    return new Light(std::move(lights));
+}
+
+} // namespace implementation
 }  // namespace V2_0
 }  // namespace light
 }  // namespace hardware
