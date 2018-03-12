@@ -49,9 +49,6 @@ public class KeyHandler implements DeviceKeyHandler {
         }
 
         void observe() {
-            mContext.getContentResolver().registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.BUTTON_EXTRA_KEY_MAPPING),
-                    false, this);
             update();
         }
 
@@ -90,9 +87,6 @@ public class KeyHandler implements DeviceKeyHandler {
     }
 
     public static void setButtonSetting(Context context) {
-        mHomeButtonWakeEnabled = Settings.System.getIntForUser(
-                context.getContentResolver(), Settings.System.BUTTON_EXTRA_KEY_MAPPING, 0,
-                UserHandle.USER_CURRENT) == 1;
         if (DEBUG) Log.i(TAG, "mHomeButtonWakeEnabled=" + mHomeButtonWakeEnabled);
     }
 

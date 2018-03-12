@@ -51,18 +51,11 @@ public class ButtonSettingsFragment extends PreferenceFragment
         addPreferencesFromResource(R.xml.button_panel);
 
         SwitchPreference mHomeButtonSwitch = (SwitchPreference) findPreference(KEY_HOMEBUTTON_SWITCH);
-        mHomeButtonSwitch.setChecked(Settings.System.getInt(getActivity().getContentResolver(),
-                    Settings.System.BUTTON_EXTRA_KEY_MAPPING, 0) != 0);
 
        mHomeButtonSwitch.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
              @Override
              public boolean onPreferenceClick(Preference preference) {
-                 if (preference == mHomeButtonSwitch) {
-                     Settings.System.putInt(getActivity().getContentResolver(),
-                             Settings.System.BUTTON_EXTRA_KEY_MAPPING, mHomeButtonSwitch.isChecked() ? 1 : 0);
-                     return true;
-                 }
-                 return false;
+                 return true;
              }
         });
 
