@@ -29,7 +29,7 @@ import android.util.Log;
 import java.io.File;
 
 import com.cyanogenmod.settings.device.utils.FileUtils;
-import com.cyanogenmod.device.KeyHandler;
+import com.cyanogenmod.settings.device.KeyHandler;
 
 public class Startup extends BroadcastReceiver {
 
