@@ -14,6 +14,10 @@ r_dir_file(qfp-daemon, sensors_persist_file)
 # Ignore all logging requests
 dontaudit qfp-daemon storage_file:dir search;
 
+allow qfp-daemon binder_device:chr_file ioctl;
+allow qfp-daemon fuse:dir search;
+allow qfp-daemon hal_fingerprint_default:binder call;
+
 allow qfp-daemon media_rw_data_file:dir { open read search };
 allow qfp-daemon mnt_user_file:dir search;
 allow qfp-daemon mnt_user_file:lnk_file read;
