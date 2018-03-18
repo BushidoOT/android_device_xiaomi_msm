@@ -1,3 +1,5 @@
+typeattribute qfp-daemon binder_in_vendor_violators;
+
 allow qfp-daemon self:socket create_socket_perms;
 allowxperm qfp-daemon self:socket ioctl msm_sock_ipc_ioctls;
 
