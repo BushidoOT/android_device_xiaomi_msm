@@ -41,9 +41,6 @@ ro.btconfig.dev=/dev/ttyHS0
 # Camera
 persist.camera.gyro.disable=0
 persist.camera.imglib.fddsp=1
-persist.camera.eis.enable=1
-persist.camera.is_type=4
-
 
 # CNE
 persist.cne.feature=1
